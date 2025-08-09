@@ -27,7 +27,7 @@ jobs:
 
     - name: Build executable
       run: |
-        pyinstaller --onefile your_script.py
+        pyinstaller --onefile csbp_v1.py
         echo "Build complete. File is in dist/"
 
     - name: Create GitHub Release

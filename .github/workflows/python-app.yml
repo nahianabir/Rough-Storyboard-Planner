@@ -27,8 +27,8 @@ jobs:
 
     - name: Build executable
       run: |
-        pyinstaller --onefile your_script.py
-        # The executable will be in dist/your_script (Linux/Mac) or dist/your_script.exe (Windows)
+        pyinstaller --onefile csbp_v1.py
+        # The executable will be in dist/csbp_v1 (Linux/Mac) or dist/csbp_v1.exe (Windows)
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1

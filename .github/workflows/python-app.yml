@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
 
 permissions:
-  contents: write  # Needed to upload release asset
+  contents: write  # Needed for GitHub release upload
 
 jobs:
   build:
@@ -25,18 +25,39 @@ jobs:
         pip install pyinstaller
         if (Test-Path requirements.txt) { pip install -r requirements.txt }
 
-    - name: Build executable
+    - name: Detect data files for PyInstaller
+      shell: pwsh
       run: |
-        pyinstaller --onefile csbp_v1.py
-        echo "Build complete. File is in dist/"
+        $files = Get-ChildItem -Recurse -File | Where-Object {
+          $_.Extension -notin @(".py", ".pyc", ".pyo", ".spec")
+        }
+        $addDataArgs = $files | ForEach-Object {
+          $relPath = $_.FullName.Substring((Get-Location).Path.Length + 1)
+          # On Windows, use semicolon separator
+          "--add-data `"$relPath;$(Split-Path $relPath)`""
+        }
+        $argsLine = $addDataArgs -join " "
+        "pyinstaller --onefile --console $argsLine csbp_v1.py" | Out-File build_command.txt -Encoding ascii
+
+    - name: Build executable with auto data files
+      run: |
+        $command = Get-Content build_command.txt -Raw
+        Invoke-Expression $command
+        echo "Executable built at dist/csbp_v1.exe"
+
+    - name: Test run executable in Actions
+      run: |
+        echo "Running the executable to check for errors..."
+        .\dist\csbp_v1.exe || exit 1
 
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       with:
         tag_name: v1.0.${{ github.run_number }}
         name: "Release v1.0.${{ github.run_number }}"
-        files: dist/*
+        files: dist/csbp_v1.exe
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
 

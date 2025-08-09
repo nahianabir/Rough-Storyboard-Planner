@@ -31,10 +31,15 @@ jobs:
         $files = Get-ChildItem -Recurse -File | Where-Object {
           $_.Extension -notin @(".py", ".pyc", ".pyo", ".spec")
         }
-        $addDataArgs = $files | ForEach-Object {
-          $relPath = $_.FullName.Substring((Get-Location).Path.Length + 1)
-          # On Windows, use semicolon separator
-          "--add-data `"$relPath;$(Split-Path $relPath)`""
+        $addDataArgs = @()
+        foreach ($file in $files) {
+          $relPath = $file.FullName.Substring((Get-Location).Path.Length + 1)
+          $destDir = Split-Path $relPath
+          if (-not [string]::IsNullOrWhiteSpace($destDir)) {
+            $addDataArgs += "--add-data `"${relPath};${destDir}`""
+          } else {
+            $addDataArgs += "--add-data `"${relPath};.`""
+          }
         }
         $argsLine = $addDataArgs -join " "
         "pyinstaller --onefile --console $argsLine csbp_v1.py" | Out-File build_command.txt -Encoding ascii
